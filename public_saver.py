@@ -147,10 +147,8 @@ def main():
     parser.add_argument("--save-video", action="store_true",
                         help="If supplied script will download video attachments of the post.",)
     args = parser.parse_args()
-    # pprint.pprint(args)
+    # get_id_from_name(args.group_id)
     # exit()
-    get_id_from_name(args.group_id)
-    exit()
     global vk
     vk = Vk.Vk()
     try:
@@ -159,7 +157,7 @@ def main():
         pass
     # os.chdir(SAVE_FOLDER)
     # exit()
-    # download_posts(group_id=args.group_id, posts_limit=args.posts_num)
+    download_posts(group_id=args.group_id, posts_limit=args.posts_num)
 
 if __name__ == '__main__':
     main()
