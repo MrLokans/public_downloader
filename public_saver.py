@@ -1,14 +1,14 @@
 # TODO:
-# - handle domain alias and id [+]
-# - make arguments check [+]
-# - implement download without requests? [-]
-# - handle download size description [-]
-# - fix ZeroDivisionError O.o [+]
-# - escape folder and file names [+-]
-# - transform public names to ids and use ids only
+# [+] handle domain alias and id
+# [+] make arguments check
+# [ ] reimplement download function!
+# [ ] handle download size description
+# [+] fix ZeroDivisionError O.o
+# [+-] escape folder and file names
+# [+] transform public names to ids and use ids only
 
 import os
-import pprint
+# import pprint
 import re
 import requests
 import sys
