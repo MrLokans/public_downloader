@@ -6,6 +6,9 @@
 # [+] fix ZeroDivisionError O.o
 # [+-] escape folder and file names
 # [+] transform public names to ids and use ids only
+# [ ] handle audio, document and video download
+# [ ] cover with tests
+# [ ] choose whether to download into subfolders or into one pile
 
 import os
 # import pprint
@@ -162,6 +165,8 @@ def main():
                         help="If supplied script will download audio attachments of the post.",)
     parser.add_argument("--save-video", action="store_true",
                         help="If supplied script will download video attachments of the post.",)
+    parser.add_argument("-o", "--output-folder", action="store_true",
+                        help="If supplied script will download video attachments of the post.",)
     args = parser.parse_args()
     # get_id_from_name(args.group_id)
 
@@ -179,7 +184,8 @@ def main():
         pass
     # os.chdir(SAVE_FOLDER)
     # exit()
-    download_posts(group_id=args.group_id, posts_limit=args.posts_num, save_folder=group_name)
+    save_to = args.output_folder or group_name
+    download_posts(group_id=args.group_id, posts_limit=args.posts_num, save_folder=save_to)
 
 if __name__ == '__main__':
     main()
