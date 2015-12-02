@@ -1,14 +1,8 @@
 # TODO:
-# [+] handle domain alias and id
-# [+] make arguments check
-# [ ] reimplement download function!
 # [ ] handle download size description
-# [+] fix ZeroDivisionError O.o
 # [+-] escape folder and file names
-# [+] transform public names to ids and use ids only
 # [ ] handle audio, document and video download
 # [ ] cover with tests
-# [ ] choose whether to download into subfolders or into one pile
 
 import os
 # import pprint
@@ -77,9 +71,8 @@ def download_url(url, filename="", folder="", chunk_size=1024):
 
 
 def get_id_from_name(name_str):
-    """ transforms public shrtame or url into ownner_id"""
+    """ transforms public alias or url into ownner_id"""
     public_id = name_str
-    # public_url = "http://www.vk.com/puclic41qwrqrqwr"
     public_pattern = r"(http:\/\/|https:\/\/)?(www\.)?vk\.com\/public([\dA-Za-z_]+)"
     r = re.match(public_pattern, name_str)
     if r:
@@ -103,18 +96,21 @@ def get_group_name(id):
     return ""
 
 
-def download_posts(group_id, posts_limit="", save_folder=""):
+def download_posts(group_id, posts_limit="", save_folder="", use_single_folder=False):
     actual_id = str(get_id_from_name(group_id))
     """This method actually downloads attachments from supplied posts"""
     posts_num = posts_limit if posts_limit else get_posts_num(group_id=actual_id)
     for post_list in get_posts_portion(group_id=actual_id, total_posts=posts_num):
         for post in post_list:
             folder_name = post.get("text", "NoName")
-            if post.get("attachments", 0):
-                for url in get_attachments_urls(post["attachments"]):
+            if not post.get("attachments", 0):
+                continue
+            for url in get_attachments_urls(post["attachments"]):
+                full_path = save_folder
+                if not use_single_folder:
                     full_path = os.path.join(save_folder, folder_name)
-                    # print("Downloading to {}".format(full_path))
-                    download_url(url, folder=full_path)
+
+                download_url(url, folder=full_path)
 
 
 def get_posts_num(group_id):
@@ -159,16 +155,17 @@ def main():
                         required=True)
     parser.add_argument("-p", "--posts-num", type=int, default=0,
                         help="Limits the number of posts to be downloaded.")
+    parser.add_argument("-o", "--output-folder", type=str,
+                        help="Folder to download attachments. By default equal to page name.",)
     parser.add_argument("--analyze-reposts", action="store_true",
                         help="If supplied reposts will alose be analyzed and downloaded.",)
     parser.add_argument("--save-audio", action="store_true",
                         help="If supplied script will download audio attachments of the post.",)
     parser.add_argument("--save-video", action="store_true",
                         help="If supplied script will download video attachments of the post.",)
-    parser.add_argument("-o", "--output-folder", action="store_true",
-                        help="If supplied script will download video attachments of the post.",)
+    parser.add_argument("--single-folder", action="store_true",
+                        help="Whether to create subfolders. If supplied will download all media fiels in single folder.",)
     args = parser.parse_args()
-    # get_id_from_name(args.group_id)
 
     global vk
     vk = Vk.Vk()
@@ -176,16 +173,12 @@ def main():
     group_name = get_group_name(group_id)
     if not(group_id and group_name):
         print("There is something wrong with group name or id, exiting...")
-        exit(0)
-    # exit()
-    try:
-        os.mkdir(group_name)
-    except FileExistsError:
-        pass
-    # os.chdir(SAVE_FOLDER)
-    # exit()
+
     save_to = args.output_folder or group_name
-    download_posts(group_id=args.group_id, posts_limit=args.posts_num, save_folder=save_to)
+    download_posts(group_id=args.group_id,
+                   posts_limit=args.posts_num,
+                   save_folder=save_to,
+                   use_single_folder=args.single_folder)
 
 if __name__ == '__main__':
     main()
