@@ -3,9 +3,9 @@
 # [+-] escape folder and file names
 # [ ] handle audio, document and video download
 # [ ] cover with tests
+# [ ] use progressbar lib
 
 import os
-# import pprint
 import re
 import requests
 import sys
@@ -13,24 +13,28 @@ import argparse
 
 
 from vk_api import Vk
-from vk_api.Vk import API_Error as API_Error
+from vk_api.Vk import API_Error
 
 vk = None
 SAVE_FOLDER = "stalincunt_posts"
+MAX_POST_PER_REQUEST = 100
 
 
 def get_filename_from_url(url):
+    """Returns last component of the URI that is almost
+    always a filename"""
     filename = url.split("/")[-1]
     return filename
 
 
-def download_url(url, filename="", folder="", chunk_size=1024):
+def download_from_url(url, filename="", folder="", chunk_size=1024):
+    """Downloads content and saves into the specified file"""
     # TODO: make humanize library to display file size more readably
     if not filename:
         filename = get_filename_from_url(url)
 
     if folder:
-        folder = folder[:101]
+        folder = folder[:MAX_POST_PER_REQUEST+1]
         try:
             if not os.path.exists(folder):
                 os.mkdir(folder)
@@ -110,12 +114,13 @@ def download_posts(group_id, posts_limit="", save_folder="", use_single_folder=F
                 if not use_single_folder:
                     full_path = os.path.join(save_folder, folder_name)
 
-                download_url(url, folder=full_path)
+                download_from_url(url, folder=full_path)
 
 
 def get_posts_num(group_id):
     """returns number of posts of the scpecified public or group"""
-    return int(vk.api_method("wall.get", owner_id="-"+group_id)["response"]["count"])
+    return int(vk.api_method("wall.get",
+                             owner_id="-"+group_id)["response"]["count"])
 
 
 def get_posts_portion(group_id="", total_posts=0, post_count=100):
@@ -124,7 +129,10 @@ def get_posts_portion(group_id="", total_posts=0, post_count=100):
     if offset >= total_posts:
         raise StopIteration
     while offset <= total_posts:
-        r = vk.api_method("wall.get", owner_id="-"+group_id, offset=offset, count=post_count)
+        r = vk.api_method("wall.get",
+                          owner_id="-" + group_id,
+                          offset=offset,
+                          count=post_count)
         posts = r["response"]["items"]
         offset += post_count
         yield posts
@@ -134,7 +142,9 @@ def validate_folder_name(post_text):
     return post_text
 
 
-def get_attachments_urls(attachments_list, download_audio=False, download_video=False):
+def get_attachments_urls(attachments_list,
+                         download_audio=False,
+                         download_video=False):
     """Gets attachments urls and with maximum quality photos."""
     url_list = []
     for attachment in attachments_list:
